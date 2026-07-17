@@ -1,0 +1,60 @@
+# Once Upon A You — Netlify config.
+# Set every env var from .env.example in Netlify → Site settings → Environment.
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Background functions (filenames end in -background → up to 15 min runtime).
+# These specific aliases MUST come before the general /api/* passthrough
+# below, which would otherwise map /api/generate-story to a non-existent
+# /.netlify/functions/generate-story.
+[[redirects]]
+  from = "/api/generate-story"
+  to = "/.netlify/functions/generate-story-background"
+  status = 200
+
+[[redirects]]
+  from = "/api/admin-approve"
+  to = "/.netlify/functions/admin-approve-background"
+  status = 200
+
+# Friendly /api/* path in front of the functions, so the frontend calls
+# /api/save-order rather than /.netlify/functions/save-order. API rules MUST
+# come before the SPA catch-all below, or the catch-all swallows them and
+# returns index.html instead of JSON.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# SPA catch-all — every non-API path renders the React app (client-side
+# routing handles /order, /admin, /privacy, /success, etc).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# HTML must always revalidate so a fresh deploy's new hashed bundle names
+# are picked up immediately.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Cache-Control = "no-cache"
+
+# Vite fingerprints every JS/CSS bundle with a content hash, so an /assets/*
+# filename never changes contents once published — safe to cache forever.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
