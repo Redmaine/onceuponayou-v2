@@ -8,10 +8,11 @@
 -- BEFORE running this file:
 --   1. Deploy the edge function first:
 --        supabase functions deploy ouay-process-image-queue \
---          --project-ref fvyvtdwsomxfkpxwygpk --no-verify-jwt
---   2. Replace <<SERVICE_ROLE_KEY>> below with the project's service_role key
---      (Supabase dashboard → Project Settings → API). Do NOT commit the real
---      key back into this file — it lives only in the SQL editor at run time.
+--          --project-ref <your-project-ref> --no-verify-jwt
+--   2. Replace <<SUPABASE_PROJECT_URL>> and <<SERVICE_ROLE_KEY>> below with
+--      this project's URL and service_role key (Supabase dashboard →
+--      Project Settings → API). Do NOT commit real values back into this
+--      file — they live only in the SQL editor at run time.
 --
 -- Apply in the Supabase SQL editor.
 -- =============================================================================
@@ -31,7 +32,7 @@ SELECT cron.schedule(
   '60 seconds',
   $$
   SELECT net.http_post(
-    url     := 'https://fvyvtdwsomxfkpxwygpk.supabase.co/functions/v1/ouay-process-image-queue',
+    url     := '<<SUPABASE_PROJECT_URL>>/functions/v1/ouay-process-image-queue',
     headers := jsonb_build_object(
       'Content-Type',  'application/json',
       'Authorization', 'Bearer <<SERVICE_ROLE_KEY>>'
