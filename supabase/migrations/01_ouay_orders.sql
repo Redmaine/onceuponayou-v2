@@ -2,7 +2,7 @@
 -- 01_ouay_orders.sql
 --
 -- Orders for Once Upon A You. All tables are prefixed ouay_ because this app
--- shares the YCA Supabase project (fvyvtdwsomxfkpxwygpk) with other brands.
+-- shares the YCA Supabase project (<your-project-ref>) with other brands.
 --
 -- Apply in the Supabase SQL editor — NOT via the Supabase CLI. This project
 -- has a known schema_migrations history drift, so `supabase db push` is

@@ -36,7 +36,7 @@ Long-running work uses Netlify **background functions** (filenames ending
 
 ### 1. Supabase migrations (run in the SQL editor — NOT the CLI)
 
-This project (`fvyvtdwsomxfkpxwygpk`) has known `schema_migrations` history
+This project (`<your-project-ref>`) has known `schema_migrations` history
 drift, so `supabase db push` is unreliable. Paste-and-run each file, in order,
 in the Supabase SQL editor:
 
@@ -52,8 +52,8 @@ in the Supabase SQL editor:
 
 ```
 supabase functions deploy ouay-process-image-queue \
-  --project-ref fvyvtdwsomxfkpxwygpk --no-verify-jwt
-supabase secrets set REPLICATE_API_TOKEN=... --project-ref fvyvtdwsomxfkpxwygpk
+  --project-ref <your-project-ref> --no-verify-jwt
+supabase secrets set REPLICATE_API_TOKEN=... --project-ref <your-project-ref>
 ```
 
 ### 3. Netlify

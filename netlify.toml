@@ -7,6 +7,12 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  # The three sample images on the homepage (src/pages/Home.jsx) are public
+  # Supabase storage URLs and contain the project ref, which otherwise trips
+  # secrets scanning on every build. The URLs are already visible to anyone
+  # who loads the page — this only tells Netlify's scanner not to flag that
+  # specific, non-sensitive match.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
 
 [functions]
   directory = "netlify/functions"

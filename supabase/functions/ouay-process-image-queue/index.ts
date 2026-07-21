@@ -9,8 +9,8 @@
 // the order moves to 'images_complete' (the admin "needs review" state).
 //
 // Deploy:  supabase functions deploy ouay-process-image-queue \
-//            --project-ref fvyvtdwsomxfkpxwygpk --no-verify-jwt
-// Secret:  supabase secrets set REPLICATE_API_TOKEN=... --project-ref fvyvtdwsomxfkpxwygpk
+//            --project-ref <your-project-ref> --no-verify-jwt
+// Secret:  supabase secrets set REPLICATE_API_TOKEN=... --project-ref <your-project-ref>
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
