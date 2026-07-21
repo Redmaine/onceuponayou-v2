@@ -20,6 +20,8 @@ export function Footer() {
           <a href="mailto:hello@onceuponayou.co.uk">hello@onceuponayou.co.uk</a>
           {' · '}
           <Link to="/privacy">Privacy &amp; returns</Link>
+          {' · '}
+          <Link to="/terms">Terms &amp; Conditions</Link>
         </div>
       </div>
     </footer>

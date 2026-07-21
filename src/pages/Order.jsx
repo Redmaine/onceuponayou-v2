@@ -176,7 +176,7 @@ export default function Order() {
             <>
               <h1 className="step-title">What kind of story?</h1>
               <p className="step-sub">Choose the feeling you'd like the book to leave behind.</p>
-              <div className="choice-grid">
+              <div className="choice-grid choice-grid-3">
                 {STORY_TYPES.map((t) => (
                   <button type="button" key={t.id} className={`choice ${form.story_type === t.id ? 'selected' : ''}`} onClick={() => set({ story_type: t.id })}>
                     <h4>{t.label}</h4>
@@ -213,6 +213,7 @@ export default function Order() {
               <div className="field">
                 <label>Photo {printProduct ? '(required for printed books)' : '(optional for ebooks)'}</label>
                 <input type="file" accept="image/*" onChange={onPhoto} />
+                <div className="hint">For best results, use a clear, forward-facing photo of your child with good lighting. The AI uses your photo to create a consistent illustrated character throughout the book. Photos taken at an angle, in low light, or with the face partially obscured will affect the quality of the illustrations.</div>
                 {form.photo_name && <div className="hint">Selected: {form.photo_name}</div>}
               </div>
               {form.photo_base64 && (

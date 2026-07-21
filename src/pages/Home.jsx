@@ -69,6 +69,14 @@ export default function Home() {
           <h2>Painted, not printed-out</h2>
           <p className="lede">Every page is illustrated in a warm, soft, painterly picture-book style — rich colour, golden light, and your child at the heart of it. No flat clip-art, no uncanny photo-mashups.</p>
         </div>
+        <div className="container">
+          <div className="sample-grid">
+            <img src="https://fvyvtdwsomxfkpxwygpk.supabase.co/storage/v1/object/public/OUAY%20Sample/test-01.png" alt="Sample illustrated page from a personalised Once Upon A You book" loading="lazy" />
+            <img src="https://fvyvtdwsomxfkpxwygpk.supabase.co/storage/v1/object/public/OUAY%20Sample/test-07.png" alt="Sample illustrated page from a personalised Once Upon A You book" loading="lazy" />
+            <img src="https://fvyvtdwsomxfkpxwygpk.supabase.co/storage/v1/object/public/OUAY%20Sample/test-18.png" alt="Sample illustrated page from a personalised Once Upon A You book" loading="lazy" />
+          </div>
+          <p className="sample-caption">Every illustration is unique to your child.</p>
+        </div>
       </section>
 
       <section className="section">
