@@ -1,3 +1,4 @@
+import { PDFDocument } from 'pdf-lib'
 import { PRODUCTS } from '../../../src/lib/products.js'
 
 // BookVault print fulfilment — Transient Order API.
@@ -9,13 +10,20 @@ import { PRODUCTS } from '../../../src/lib/products.js'
 // IMPORTANT: confirm the exact endpoint URL and auth header against BookVault's
 // current API docs before launch (flagged in the README). The request shape
 // below sends the fields the integration needs — interior + cover PDF URLs,
-// the delivery address, customer name, SKU and quantity — but BookVault's
-// exact field names may differ. BOOKVAULT_API_URL can override the default
-// endpoint via env without a code change.
+// the delivery address, customer name, SKU, quantity and page count — but
+// BookVault's exact field names (particularly page_count) may differ.
+// BOOKVAULT_API_URL can override the default endpoint via env without a code
+// change.
 const DEFAULT_BOOKVAULT_URL = 'https://api.bookvault.app/v1/orders/transient'
 
 export function skuForProduct(productType) {
   return PRODUCTS[productType]?.bookvaultSku || null
+}
+
+async function fetchBytes(url) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`failed to fetch ${url}: ${res.status}`)
+  return new Uint8Array(await res.arrayBuffer())
 }
 
 // Returns { skipped: true } for ebook-only products (nothing to print), else
@@ -35,6 +43,14 @@ export async function sendToBookVault(order) {
   const apiKey = process.env.BOOKVAULT_API_KEY
   if (!apiKey) throw new Error('BOOKVAULT_API_KEY not set')
 
+  // Page count must reflect the actual assembled interior PDF, not an
+  // estimate — the hardcover now binds 3 stories into one book (~66 pages)
+  // while softcover binds 1 (~22), and BookVault needs the real count for
+  // whichever one this order produced.
+  const interiorBytes = await fetchBytes(order.interior_pdf_url)
+  const interiorDoc = await PDFDocument.load(interiorBytes)
+  const pageCount = interiorDoc.getPageCount()
+
   const addr = order.delivery_address || {}
   const url = process.env.BOOKVAULT_API_URL || DEFAULT_BOOKVAULT_URL
 
@@ -43,7 +59,12 @@ export async function sendToBookVault(order) {
     items: [
       {
         sku,
-        quantity: product.printCount,
+        // Always one bound physical book per order — product.printCount is
+        // the number of stories bound INSIDE it (1 for softcover, 3 for
+        // hardcover), not a book quantity. Using printCount here would order
+        // 3 separate hardcover copies instead of 1 book with 3 stories.
+        quantity: 1,
+        page_count: pageCount,
         interior_url: order.interior_pdf_url,
         cover_url: order.cover_pdf_url,
       },

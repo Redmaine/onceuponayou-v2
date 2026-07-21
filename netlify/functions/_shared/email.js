@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { PRODUCTS } from '../../../src/lib/products.js'
+import { storyTypeLabel } from '../../../src/lib/themes.js'
 
 // All transactional email for Once Upon A You. Every message is best-effort at
 // the call site — an email failing must never roll back an order, a dispatch,
@@ -111,7 +112,7 @@ export async function sendAdminNewOrder(order) {
       <tr><td style="padding:4px 0;color:#6b6455">Amount</td><td style="text-align:right">£${((order.amount_paid || 0) / 100).toFixed(2)}</td></tr>
       <tr><td style="padding:4px 0;color:#6b6455">Customer</td><td style="text-align:right">${esc(order.customer_name)} &lt;${esc(order.customer_email)}&gt;</td></tr>
       <tr><td style="padding:4px 0;color:#6b6455">Hero</td><td style="text-align:right">${esc(order.hero_name)}, age ${esc(order.hero_age)}, ${esc(order.hero_gender)}</td></tr>
-      <tr><td style="padding:4px 0;color:#6b6455">Story type</td><td style="text-align:right">${esc(order.story_type)}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b6455">Story type</td><td style="text-align:right">${esc(storyTypeLabel(order.story_type))}</td></tr>
       <tr><td style="padding:4px 0;color:#6b6455">Themes</td><td style="text-align:right">${[order.theme, order.theme2, order.theme3].filter(Boolean).map(esc).join(', ') || '—'}</td></tr>
       <tr><td style="padding:4px 0;color:#6b6455;vertical-align:top">Delivery</td><td style="text-align:right">${[addr.line1, addr.line2, addr.town, addr.county, addr.postcode, addr.country].filter(Boolean).map(esc).join(', ') || '— (ebook)'}</td></tr>
     </table>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Layout from '../components/Layout.jsx'
 import { PRODUCTS } from '../lib/products.js'
+import { storyTypeLabel } from '../lib/themes.js'
 
 const STATUS_FILTERS = ['', 'paid', 'generating', 'images_pending', 'images_complete', 'printing', 'dispatched', 'complete']
 
@@ -152,7 +153,7 @@ function OrderDetail({ data, onBack, onApprove, onDispatch, busy }) {
         <div className="card"><h3>Order</h3>
           <p>{product?.label} · £{((order.amount_paid || 0) / 100).toFixed(2)}<br />
           {order.customer_name} &lt;{order.customer_email}&gt;<br />
-          Story type: {order.story_type}<br />
+          Story type: {storyTypeLabel(order.story_type)}<br />
           Themes: {[order.theme, order.theme2, order.theme3].filter(Boolean).join(', ') || '—'}</p>
         </div>
         <div className="card"><h3>Hero</h3>
@@ -180,7 +181,7 @@ function OrderDetail({ data, onBack, onApprove, onDispatch, busy }) {
         const imgs = imagesByStory?.[s.id] || []
         return (
           <div key={s.id} style={{ marginBottom: 30 }}>
-            <h3 style={{ color: 'var(--green)' }}>Story {s.story_number}: {s.title} {s.is_ebook ? '(ebook)' : '(print)'}
+            <h3 style={{ color: 'var(--green)' }}>Story {s.story_number}: {s.title} {s.is_ebook ? '(ebook)' : '(print)'} · {storyTypeLabel(s.story_type)}
               {s.sense_check_passed === false && <span className="badge fail" style={{ marginLeft: 8 }}>sense-check flags</span>}
             </h3>
             {s.sense_check_errors && <p className="hint">{(s.sense_check_errors || []).join(' · ')}</p>}

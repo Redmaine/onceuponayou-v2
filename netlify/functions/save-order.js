@@ -1,6 +1,7 @@
 import { admin, uploadPublic } from './_shared/supabase.js'
 import { json, methodNotAllowed, makeOrderRef } from './_shared/http.js'
-import { PRODUCTS, isPrintProduct, priceInPence } from '../../src/lib/products.js'
+import { PRODUCTS, isPrintProduct, isHardcoverProduct, priceInPence } from '../../src/lib/products.js'
+import { MIXED_STORY_TYPE } from '../../src/lib/themes.js'
 
 // Saves an order (status 'new', unpaid) and returns the Stripe checkout URL to
 // redirect to. The frontend calls this last, just before redirecting to
@@ -17,7 +18,11 @@ export async function handler(event) {
 
   const product = PRODUCTS[payload.product_type]
   if (!product) return json(400, { error: 'Unknown product_type' })
-  if (!['adventure', 'love', 'growing'].includes(payload.story_type)) {
+  // Hardcover products carry a fixed adventure/love/growing collection
+  // (one story type per print story) rather than a single customer choice —
+  // see generate-story-background.js — so story_type isn't customer input here.
+  const hardcoverFamily = isHardcoverProduct(payload.product_type)
+  if (!hardcoverFamily && !['adventure', 'love', 'growing'].includes(payload.story_type)) {
     return json(400, { error: 'Invalid story_type' })
   }
   if (!payload.hero_name || !String(payload.hero_name).trim()) {
@@ -70,7 +75,7 @@ export async function handler(event) {
     hero_skin: payload.hero_skin || null,
     hero_features: payload.hero_features || null,
     hero_photo_url: heroPhotoUrl,
-    story_type: payload.story_type,
+    story_type: hardcoverFamily ? MIXED_STORY_TYPE : payload.story_type,
     theme: payload.theme || null,
     theme2: payload.theme2 || null,
     theme3: payload.theme3 || null,

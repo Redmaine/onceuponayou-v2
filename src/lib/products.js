@@ -43,7 +43,7 @@ export const PRODUCTS = {
     label: 'Hardcover Book',
     price: 19.99,
     stripeLink: 'https://buy.stripe.com/cNi3cw6IEg502e16BE73G01',
-    printCount: 1,
+    printCount: 3,
     ebookCount: 0,
     delivery: 'print',
     bookvaultSku: '150CWGHB216H216W',
@@ -52,7 +52,7 @@ export const PRODUCTS = {
     label: 'Hardcover + Ebook (1 story)',
     price: 22.99,
     stripeLink: 'https://buy.stripe.com/5kQdRa5EAbOK8Cp7FI73G05',
-    printCount: 1,
+    printCount: 3,
     ebookCount: 1,
     delivery: 'both',
     bookvaultSku: '150CWGHB216H216W',
@@ -61,7 +61,7 @@ export const PRODUCTS = {
     label: 'Hardcover + Ebook (3 stories)',
     price: 24.99,
     stripeLink: 'https://buy.stripe.com/9B6cN6aYU2ea3i58JM73G06',
-    printCount: 1,
+    printCount: 3,
     ebookCount: 3,
     delivery: 'both',
     bookvaultSku: '150CWGHB216H216W',
@@ -74,9 +74,9 @@ export const PRODUCT_DESCRIPTIONS = {
   ebook_triple: 'Three personalised stories in one ebook — three adventures for your child.',
   softcover: 'A keepsake softcover picture book, printed and posted to your door.',
   bundle_soft: 'The softcover book plus the ebook, so you can read it anywhere.',
-  hardcover: 'A premium hardcover picture book — the heirloom edition.',
-  bundle_hard_one: 'The hardcover book plus a matching single-story ebook.',
-  bundle_hard_three: 'The hardcover book plus a three-story ebook bundle.',
+  hardcover: 'Three personalised stories in one premium hardcover — a complete collection, printed and posted to your door.',
+  bundle_hard_one: 'Three printed stories in a premium hardcover, plus one bonus ebook story delivered to your inbox.',
+  bundle_hard_three: 'Three printed stories in a premium hardcover, plus three bonus ebook stories — the complete Once Upon A You collection.',
 }
 
 // Products in the order they should be shown to customers.
@@ -102,6 +102,14 @@ export function isPrintProduct(productType) {
 export function isEbookProduct(productType) {
   const p = PRODUCTS[productType]
   return !!p && p.ebookCount > 0
+}
+
+// 3 print stories ⇒ the hardcover product family (hardcover, bundle_hard_one,
+// bundle_hard_three) — every hardcover binds a fixed adventure/love/growing
+// collection rather than the customer picking one story type.
+export function isHardcoverProduct(productType) {
+  const p = PRODUCTS[productType]
+  return !!p && p.printCount === 3
 }
 
 // Amount in pence, for storing on the order and comparing against Stripe.

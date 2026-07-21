@@ -1,13 +1,22 @@
 import { useMemo, useState } from 'react'
 import Layout from '../components/Layout.jsx'
-import { PRODUCTS, PRODUCT_DESCRIPTIONS, PRODUCT_ORDER, isPrintProduct } from '../lib/products.js'
-import { STORY_TYPES, ADVENTURE_THEMES } from '../lib/themes.js'
+import { PRODUCTS, PRODUCT_DESCRIPTIONS, PRODUCT_ORDER, isPrintProduct, isHardcoverProduct } from '../lib/products.js'
+import { STORY_TYPES, ADVENTURE_THEMES, storyTypeLabel, MIXED_STORY_TYPE } from '../lib/themes.js'
 
 const GENDER_OPTIONS = [
   { value: 'boy', label: 'Boy' },
   { value: 'girl', label: 'Girl' },
   { value: 'child', label: 'They prefer not to say' },
 ]
+
+// Order-summary text for the hardcover family (fixed 3-story collection),
+// per product — the softcover/ebook lines are built dynamically instead
+// since they depend on the customer's chosen story type.
+const HARDCOVER_SUMMARY = {
+  hardcover: '3 printed stories: Adventure, Love & Connection, Growing & Becoming',
+  bundle_hard_one: '3 printed stories + 1 ebook story (theme randomised)',
+  bundle_hard_three: '3 printed stories + 3 ebook stories (themes randomised)',
+}
 
 export default function Order() {
   const [stepIdx, setStepIdx] = useState(0)
@@ -34,6 +43,7 @@ export default function Order() {
 
   const product = form.product_type ? PRODUCTS[form.product_type] : null
   const printProduct = form.product_type ? isPrintProduct(form.product_type) : false
+  const hardcoverProduct = form.product_type ? isHardcoverProduct(form.product_type) : false
   // Ebook-only products let the customer pick every theme; print/bundle
   // products pick only the single print theme (bundle ebook themes are
   // randomised server-side).
@@ -74,7 +84,7 @@ export default function Order() {
   function validateStep() {
     setError('')
     if (step === 'product' && !form.product_type) return 'Please choose a book.'
-    if (step === 'storytype' && !form.story_type) return 'Please choose a story type.'
+    if (step === 'storytype' && !hardcoverProduct && !form.story_type) return 'Please choose a story type.'
     if (step === 'hero') {
       if (!form.hero_name.trim()) return "Please enter your child's name."
       const age = Number(form.hero_age)
@@ -161,7 +171,7 @@ export default function Order() {
                 {PRODUCT_ORDER.map((key) => {
                   const p = PRODUCTS[key]
                   return (
-                    <button type="button" key={key} className={`choice ${form.product_type === key ? 'selected' : ''}`} onClick={() => set({ product_type: key, themes: [] })}>
+                    <button type="button" key={key} className={`choice ${form.product_type === key ? 'selected' : ''}`} onClick={() => set({ product_type: key, themes: [], story_type: isHardcoverProduct(key) ? MIXED_STORY_TYPE : '' })}>
                       <h4>{p.label}</h4>
                       <div className="price">£{p.price.toFixed(2)}</div>
                       <p>{PRODUCT_DESCRIPTIONS[key]}</p>
@@ -175,15 +185,24 @@ export default function Order() {
           {step === 'storytype' && (
             <>
               <h1 className="step-title">What kind of story?</h1>
-              <p className="step-sub">Choose the feeling you'd like the book to leave behind.</p>
-              <div className="choice-grid choice-grid-3">
-                {STORY_TYPES.map((t) => (
-                  <button type="button" key={t.id} className={`choice ${form.story_type === t.id ? 'selected' : ''}`} onClick={() => set({ story_type: t.id })}>
-                    <h4>{t.label}</h4>
-                    <p><strong>{t.tagline}.</strong> {t.description}</p>
-                  </button>
-                ))}
-              </div>
+              {hardcoverProduct ? (
+                <>
+                  <p className="step-sub">Every hardcover is a complete collection.</p>
+                  <p className="notice">Your hardcover book includes all three stories — Adventure, Love &amp; Connection, and Growing &amp; Becoming. Every hardcover is a complete collection.</p>
+                </>
+              ) : (
+                <>
+                  <p className="step-sub">Choose the feeling you'd like the book to leave behind.</p>
+                  <div className="choice-grid choice-grid-3">
+                    {STORY_TYPES.map((t) => (
+                      <button type="button" key={t.id} className={`choice ${form.story_type === t.id ? 'selected' : ''}`} onClick={() => set({ story_type: t.id })}>
+                        <h4>{t.label}</h4>
+                        <p><strong>{t.tagline}.</strong> {t.description}</p>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           )}
 
@@ -285,7 +304,13 @@ export default function Order() {
               <h1 className="step-title">Review &amp; pay</h1>
               <p className="step-sub">One last look before we take you to secure checkout.</p>
               <div className="summary-line"><span>Book</span><strong>{product?.label}</strong></div>
-              <div className="summary-line"><span>Story type</span><strong>{STORY_TYPES.find((t) => t.id === form.story_type)?.label}</strong></div>
+              {hardcoverProduct ? (
+                <div className="summary-line"><span>Includes</span><strong>{HARDCOVER_SUMMARY[form.product_type]}</strong></div>
+              ) : form.product_type === 'softcover' ? (
+                <div className="summary-line"><span>Includes</span><strong>1 story: {storyTypeLabel(form.story_type)}</strong></div>
+              ) : (
+                <div className="summary-line"><span>Story type</span><strong>{storyTypeLabel(form.story_type)}</strong></div>
+              )}
               <div className="summary-line"><span>Hero</span><strong>{form.hero_name}, age {form.hero_age}</strong></div>
               <div className="summary-line"><span>Theme{form.themes.length > 1 ? 's' : ''}</span><strong>{form.themes.join(', ') || '—'}</strong></div>
               {form.dedication && <div className="summary-line"><span>Dedication</span><strong>“{form.dedication}”</strong></div>}

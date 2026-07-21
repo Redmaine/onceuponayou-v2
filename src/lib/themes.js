@@ -41,7 +41,14 @@ export const STORY_TYPES = [
   },
 ]
 
+// Sentinel stored on ouay_orders.story_type for hardcover-family orders,
+// which carry all three story types (one per print story) instead of a
+// single customer choice. Kept as a real value (not null) because the
+// column is NOT NULL.
+export const MIXED_STORY_TYPE = 'mixed'
+
 export function storyTypeLabel(id) {
+  if (id === MIXED_STORY_TYPE) return 'All three (hardcover collection)'
   return STORY_TYPES.find((t) => t.id === id)?.label || id
 }
 

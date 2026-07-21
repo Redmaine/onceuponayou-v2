@@ -2,8 +2,13 @@ import { admin } from './_shared/supabase.js'
 import { json } from './_shared/http.js'
 import { generateStory } from './_shared/story.js'
 import { ensureCharacterReference, queueStoryImageJobs } from './_shared/imageJobs.js'
-import { PRODUCTS } from '../../src/lib/products.js'
-import { randomEbookThemes } from '../../src/lib/themes.js'
+import { PRODUCTS, isHardcoverProduct } from '../../src/lib/products.js'
+import { STORY_TYPES, randomEbookThemes } from '../../src/lib/themes.js'
+
+// Fixed sequence for the hardcover family's 3-story collection: adventure,
+// love, growing (STORY_TYPES' natural order) — every hardcover binds one of
+// each rather than the customer picking a single story type.
+const HARDCOVER_STORY_TYPES = STORY_TYPES.map((t) => t.id)
 
 // Background function (filename ends -background → up to 15 min runtime).
 // Orchestrates: story text → sense check → save stories → character reference
@@ -32,14 +37,24 @@ export async function handler(event) {
 
   const product = PRODUCTS[order.product_type]
   if (!product) return json(400, { error: `unknown product_type ${order.product_type}` })
+  const hardcoverFamily = isHardcoverProduct(order.product_type)
 
-  // ── Resolve the theme for each story ──────────────────────────────────────
+  // ── Resolve the theme + story type for each story ──────────────────────────
   // Print story uses the customer's chosen theme. Ebook themes: for an
   // ebook-only product the customer picked them (theme/theme2/theme3); for a
   // bundle the system randomises them, excluding the print theme.
+  //
+  // story_type is order.story_type for every story UNLESS this is a hardcover
+  // product, in which case each story gets the next entry in the fixed
+  // adventure/love/growing sequence — the print stories first, then any bonus
+  // ebook stories continuing the same cycle.
   const planned = []
   for (let i = 0; i < product.printCount; i++) {
-    planned.push({ theme: order.theme || 'Enchanted Forest', is_ebook: false })
+    planned.push({
+      theme: order.theme || 'Enchanted Forest',
+      story_type: hardcoverFamily ? HARDCOVER_STORY_TYPES[i % HARDCOVER_STORY_TYPES.length] : order.story_type,
+      is_ebook: false,
+    })
   }
   if (product.ebookCount > 0) {
     let ebookThemes
@@ -52,7 +67,13 @@ export async function handler(event) {
     } else {
       ebookThemes = randomEbookThemes(product.ebookCount, [order.theme])
     }
-    for (const theme of ebookThemes) planned.push({ theme, is_ebook: true })
+    ebookThemes.forEach((theme, i) => {
+      planned.push({
+        theme,
+        story_type: hardcoverFamily ? HARDCOVER_STORY_TYPES[i % HARDCOVER_STORY_TYPES.length] : order.story_type,
+        is_ebook: true,
+      })
+    })
   }
 
   try {
@@ -60,7 +81,7 @@ export async function handler(event) {
     const savedStories = []
     let storyNumber = 1
     for (const plan of planned) {
-      const { story, senseCheckPassed, senseCheckErrors } = await generateStory(order, plan.theme)
+      const { story, senseCheckPassed, senseCheckErrors } = await generateStory(order, plan.theme, plan.story_type)
       const { data: inserted, error } = await db
         .from('ouay_stories')
         .insert({
@@ -68,7 +89,7 @@ export async function handler(event) {
           story_number: storyNumber,
           hero_name: order.hero_name,
           theme: plan.theme,
-          story_type: order.story_type,
+          story_type: plan.story_type,
           title: story.title,
           pages: story.pages,
           back_cover_blurb: story.back_cover_blurb,

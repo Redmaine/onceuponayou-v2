@@ -35,9 +35,9 @@ The child discovers the strength was inside them all along. The ending is a door
 FORBIDDEN: an adult handing over the answer; the child failing repeatedly; a closing/final ending; the phrase "and they never forgot".`,
 }
 
-function buildSystemPrompt(order) {
+function buildSystemPrompt(order, storyType) {
   const nameLimit = nameLimitForAge(order.hero_age)
-  const typeRules = STORY_TYPE_RULES[order.story_type] || STORY_TYPE_RULES.adventure
+  const typeRules = STORY_TYPE_RULES[storyType] || STORY_TYPE_RULES.adventure
   return `You are a master children's picture-book author writing a deeply personal, warm, age-appropriate story for one specific child. Your writing is gentle, specific and emotionally true — never generic, never saccharine, never preachy.
 
 ${typeRules}
@@ -90,12 +90,12 @@ const STORY_TOOL = {
   },
 }
 
-async function callClaudeForStory(order, theme) {
+async function callClaudeForStory(order, theme, storyType) {
   const client = anthropic()
   const msg = await client.messages.create({
     model: STORY_MODEL,
     max_tokens: 4000,
-    system: buildSystemPrompt(order),
+    system: buildSystemPrompt(order, storyType),
     tools: [STORY_TOOL],
     tool_choice: { type: 'tool', name: 'submit_story' },
     messages: [{ role: 'user', content: buildUserMessage(order, theme) }],
@@ -143,12 +143,19 @@ export function senseCheck(story, order) {
 // Always returns a story object plus the sense-check outcome — even a failed
 // second attempt is returned (flagged) so the admin can review rather than the
 // order silently stalling.
-export async function generateStory(order, theme) {
-  let story = await callClaudeForStory(order, theme)
+//
+// storyType selects which STORY_TYPE_RULES apply to THIS story — callers
+// generating several stories per order (e.g. the hardcover's fixed
+// adventure/love/growing collection) pass a different value per call.
+// Falls back to order.story_type for callers generating a single
+// customer-chosen story type.
+export async function generateStory(order, theme, storyType) {
+  const resolvedType = storyType || order.story_type
+  let story = await callClaudeForStory(order, theme, resolvedType)
   let check = senseCheck(story, order)
   if (!check.passed) {
     try {
-      const retry = await callClaudeForStory(order, theme)
+      const retry = await callClaudeForStory(order, theme, resolvedType)
       const retryCheck = senseCheck(retry, order)
       // Keep whichever attempt passed; if neither did, keep the retry and
       // surface its errors for manual review.
