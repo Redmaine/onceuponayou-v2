@@ -5,7 +5,10 @@ export function Header() {
     <header className="site-header">
       <div className="container inner">
         <Link to="/" className="brandmark">Once Upon A You <small>✦</small></Link>
-        <Link to="/order" className="btn btn-primary btn-sm">Create Your Book</Link>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/blog" style={{ color: 'inherit', textDecoration: 'none', fontWeight: 600 }}>Journal</Link>
+          <Link to="/order" className="btn btn-primary btn-sm">Create Your Book</Link>
+        </nav>
       </div>
     </header>
   )
