@@ -73,6 +73,21 @@ function markdownToHtml(markdown) {
   return html.join('\n')
 }
 
+// schema_article / schema_faq frontmatter fields are base64-encoded JSON-LD
+// (Article + optional FAQPage), written by publish-approved-blog — base64
+// because parseFrontmatter above is a naive key:-per-line reader with no
+// support for the quotes/colons/braces raw JSON would contain. Returns null
+// so BlogPost.jsx can render nothing for a post that predates this field.
+function decodeSchema(b64) {
+  if (!b64) return null
+  try {
+    return decodeURIComponent(escape(atob(b64)))
+  } catch (e) {
+    console.error('[blog] could not decode schema frontmatter field:', e.message)
+    return null
+  }
+}
+
 function toPost(raw) {
   const { meta, body } = parseFrontmatter(raw)
   return {
@@ -82,6 +97,8 @@ function toPost(raw) {
     excerpt: meta.excerpt || '',
     brand: meta.brand || '',
     html: looksLikeHtml(body) ? body : markdownToHtml(body),
+    schemaArticle: decodeSchema(meta.schema_article),
+    schemaFaq: decodeSchema(meta.schema_faq),
   }
 }
 

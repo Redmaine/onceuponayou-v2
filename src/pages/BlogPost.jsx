@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
 import { getPost } from '../lib/blog.js'
@@ -9,9 +10,28 @@ function formatDate(date) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+// Real <script type="application/ld+json"> elements appended to <head>,
+// removed on unmount/change so navigating between posts can't leave a
+// stale or duplicate schema block behind. Same pattern used on Hormonely
+// and Neuro Decoded.
+function useJsonLdSchema(articleJson, faqJson) {
+  useEffect(() => {
+    const elements = [articleJson, faqJson].filter(Boolean).map((json) => {
+      const el = document.createElement('script')
+      el.type = 'application/ld+json'
+      el.text = json
+      document.head.appendChild(el)
+      return el
+    })
+    return () => elements.forEach((el) => el.remove())
+  }, [articleJson, faqJson])
+}
+
 export default function BlogPost() {
   const { slug } = useParams()
   const post = getPost(slug)
+
+  useJsonLdSchema(post?.schemaArticle, post?.schemaFaq)
 
   if (!post) {
     return (
