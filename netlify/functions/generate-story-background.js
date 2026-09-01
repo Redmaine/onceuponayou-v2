@@ -33,7 +33,11 @@ export async function handler(event) {
   if (!['paid', 'generating'].includes(order.status)) {
     return json(200, { skipped: true, status: order.status })
   }
-  await db.from('ouay_orders').update({ status: 'generating', updated_at: new Date().toISOString() }).eq('id', order.id)
+  // generation_error cleared on every attempt (not just on eventual success):
+  // a stale reason from a previous failed run must never sit next to a
+  // status this run is about to change, or a genuine retry-then-fail would
+  // look like it repeated the OLD failure when the DB simply never updated it.
+  await db.from('ouay_orders').update({ status: 'generating', generation_error: null, updated_at: new Date().toISOString() }).eq('id', order.id)
 
   const product = PRODUCTS[order.product_type]
   if (!product) return json(400, { error: `unknown product_type ${order.product_type}` })
@@ -115,7 +119,15 @@ export async function handler(event) {
     return json(200, { ok: true, stories: savedStories.length })
   } catch (e) {
     console.error(`generate-story failed for ${orderRef}:`, e.message)
-    await db.from('ouay_orders').update({ status: 'generation_failed', updated_at: new Date().toISOString() }).eq('id', order.id)
+    // Persisted, not just logged — console.error is invisible outside a live
+    // tail of the deploy's function logs, which is exactly what made this
+    // order's real failure reason unrecoverable after the fact and forced a
+    // second live re-run just to see the error text during THIS fix's own
+    // verification. Real evidence, not "no exception thrown", also applies
+    // to how failures are recorded, not only how fixes are checked.
+    await db.from('ouay_orders')
+      .update({ status: 'generation_failed', generation_error: String(e.message ?? e).slice(0, 2000), updated_at: new Date().toISOString() })
+      .eq('id', order.id)
     return json(500, { error: e.message })
   }
 }
