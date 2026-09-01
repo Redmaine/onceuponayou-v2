@@ -3,11 +3,18 @@ import Anthropic from '@anthropic-ai/sdk'
 // Story generation. Uses Claude to write a 20-page personalised picture-book
 // story, then runs a deterministic sense check and retries once on failure.
 //
-// NOTE ON MODEL ID: the brief specified 'claude-sonnet-4-6'. That is kept
-// verbatim here as the single STORY_MODEL constant. If the Anthropic account
-// returns a 404/model-not-found, update this one line to a current Sonnet id
-// (e.g. 'claude-sonnet-5') — flagged in the README's launch checklist.
-export const STORY_MODEL = 'claude-sonnet-4-6'
+// MODEL ID FIX (1 Sep 2026): the brief specified 'claude-sonnet-4-6', which
+// this file kept verbatim as a placeholder — but that id has never existed.
+// Root cause of order OAY-17882023569687494 ("Lottie", 31 Aug 2026) landing
+// in generation_failed: every callClaudeForStory() call 404'd on the model
+// id before a single story could be written (confirmed: the order has zero
+// ouay_stories rows — it never got past the first LLM call — and failed
+// ~73s after payment, consistent with an immediate model-not-found rejection
+// rather than a mid-generation stall). At the time of this fix "Lottie" was
+// the only order this pipeline had ever processed (ouay_orders holds exactly
+// one row), so this was caught on the very first real order, not after a
+// backlog. Now a real, current model id.
+export const STORY_MODEL = 'claude-sonnet-5'
 
 function anthropic() {
   const key = process.env.ANTHROPIC_API_KEY
